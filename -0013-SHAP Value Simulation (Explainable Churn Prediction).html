@@ -1,0 +1,62 @@
+<div class="container">
+    <h1>SHAP Value Simulation (Explainable Churn Prediction)</h1>
+    <p class="explanation">
+        <strong>Method:</strong> SHAP (SHapley Additive exPlanations) uses game theory concepts to assign an "importance value" (SHAP value) to each feature for a specific prediction. The sum of SHAP values plus the baseline risk equals the final predicted risk, allowing advisors to understand the exact root cause of the score. 
+    </p>
+
+    <label for="baseline_risk">1. Baseline Churn Risk (Average of all students, %):</label>
+    <input type="number" id="baseline_risk" value="15" min="5" max="30" step="1">
+    
+    <label for="shap_gpa">2. SHAP Contribution of Low GPA (Points added to risk, e.g., +20):</label>
+    <input type="number" id="shap_gpa" value="20" min="-20" max="30" step="5">
+
+    <label for="shap_lms">3. SHAP Contribution of Low LMS Activity (Points added to risk, e.g., +15):</label>
+    <input type="number" id="shap_lms" value="15" min="-20" max="30" step="5">
+
+    <label for="shap_advisor">4. SHAP Contribution of High Advisor Contact (Points subtracted, e.g., -10):</label>
+    <input type="number" id="shap_advisor" value="-10" min="-20" max="30" step="5">
+
+    <button onclick="calculateSHAP()">Calculate Final Explained Risk</button>
+    <div id="result_shap"></div>
+</div>
+
+<script>
+// --- SHAP Value Simulation (XAI) in JavaScript ---
+
+function calculateSHAP() {
+    const baseline = parseFloat(document.getElementById('baseline_risk').value);
+    const shapGpa = parseFloat(document.getElementById('shap_gpa').value);
+    const shapLMS = parseFloat(document.getElementById('shap_lms').value);
+    const shapAdvisor = parseFloat(document.getElementById('shap_advisor').value);
+    
+    // Summation of all contributions
+    const totalContribution = shapGpa + shapLMS + shapAdvisor;
+    
+    // Final Explained Risk = Baseline + Sum(SHAP Values)
+    const finalRisk = Math.min(100, Math.max(0, baseline + totalContribution)).toFixed(1);
+
+    const resultDiv = document.getElementById('result_shap');
+    
+    let message = `<h2>SHAP EXPLAINABILITY REPORT</h2>`;
+    message += `<p><strong>Baseline Risk: ${baseline}%</strong></p>`;
+    message += `<p><strong>Total Contribution: ${totalContribution > 0 ? '+' : ''}${totalContribution.toFixed(1)} points</strong></p>`;
+    message += `<p><strong>Final Explained Churn Risk: <span style="font-size: 1.5em; color: ${finalRisk >= 50 ? 'red' : 'green'};">${finalRisk}%</span></strong></p>`;
+
+    message += `<h3>FEATURE CONTRIBUTIONS (Root Causes):</h3>`;
+    message += `<ul>
+        <li style="color: ${shapGpa > 0 ? 'red' : 'green'};">Low GPA: ${shapGpa > 0 ? '+' : ''}${shapGpa} points (Risk Increasing)</li>
+        <li style="color: ${shapLMS > 0 ? 'red' : 'green'};">Low LMS Activity: ${shapLMS > 0 ? '+' : ''}${shapLMS} points (Risk Increasing)</li>
+        <li style="color: ${shapAdvisor > 0 ? 'red' : 'green'};">High Advisor Contact: ${shapAdvisor > 0 ? '+' : ''}${shapAdvisor} points (Risk Reducing)</li>
+    </ul>`;
+
+    if (finalRisk >= 50) {
+        message += `<p><strong>ACTION:</strong> The model identified Low GPA as the strongest contributing factor. Intervention must be targeted to address the feature with the highest positive SHAP value (root cause).</p>`;
+    } else {
+        message += `<p><strong>ACTION:</strong> The high risk reducing factor (Advisor Contact) is successfully mitigating risk. Ensure this positive interaction continues.</p>`;
+    }
+
+    resultDiv.innerHTML = message;
+}
+</script>
+</body>
+</html>
